@@ -23,6 +23,7 @@ fn run(cli: Cli) -> Result<()> {
 }
 
 fn main() {
+    env_logger::init();
     let cli = Cli::parse();
 
     if let Err(e) = run(cli) {
