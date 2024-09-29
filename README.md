@@ -27,11 +27,11 @@ echo "AUTH_TOKEN=$AUTH_TOKEN"
 * Generate CLI completions.
 * Add 'secret' EnvVars that will be transformed to `****` in `em list`.
 * Shorten long EnvVars in `em list` and add a `em get` to get the full value.
-* Current transaction handling is awful, should be moved out of the repositories.
-    * Possible idea: return a `Transaction` from a method, then pass them to other
-      repository methods, commit at the end of a command.
-* I have no idea if the way I'm handling the database connection is idiomatic, but
-  I wanted to use lifetimes somewhere.
+* Current transaction and connection handling is awful, should be moved out of the
+  repositories, but I wanted to try to do something with lifetimes for now.
+    * Probable solution: the `Db` struct should hold a connection pool. The commands
+      should either request a transaction or a connection, which will be later passed
+      to the repositories. The command is responsible for committing the transaction.
 * I think the validation code and the resolver code could be improved, but I don't know
   how yet.
     * Actually, how are validators handled usually?
