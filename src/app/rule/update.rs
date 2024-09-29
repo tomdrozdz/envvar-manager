@@ -1,10 +1,10 @@
 use anyhow::Result;
-use clap::Parser;
+use clap::Args;
 
 use crate::repository::Repository;
 use crate::sqlite::Database;
 
-#[derive(Debug, Parser)]
+#[derive(Args, Debug)]
 pub struct Command {
     name: String,
     template: String,

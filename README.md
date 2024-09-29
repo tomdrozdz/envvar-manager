@@ -12,7 +12,7 @@ em --help
 ## Example
 
 ```bash
-em add TOKEN 123456
+em env add TOKEN 123456
 em rule add AUTH_TOKEN "Bearer {TOKEN}"
 
 alias getenv='eval "$(em export)"'
@@ -24,7 +24,6 @@ echo "AUTH_TOKEN=$AUTH_TOKEN"
 
 ## TODO
 
-* Generate CLI completions.
 * Add 'secret' EnvVars that will be transformed to `****` in `em list`.
 * Shorten long EnvVars in `em list` and add a `em get` to get the full value.
 * Current transaction and connection handling is awful, should be moved out of the

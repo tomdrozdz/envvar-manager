@@ -1,12 +1,12 @@
 use anyhow::Result;
-use clap::Parser;
+use clap::Args;
 
 use crate::entities::env_var::EnvVar;
 use crate::input::{gui, terminal};
 use crate::repository::Repository;
 use crate::sqlite::Database;
 
-#[derive(Debug, Parser)]
+#[derive(Args, Debug)]
 pub struct Command {
     /// Do not show a GUI input window, use the terminal instead
     #[clap(short, long)]

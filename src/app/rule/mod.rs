@@ -8,7 +8,7 @@ mod list;
 mod remove;
 mod update;
 
-#[derive(Debug, Subcommand)]
+#[derive(Subcommand, Debug)]
 pub enum Command {
     /// Add a new templating rule
     Add(add::Command),

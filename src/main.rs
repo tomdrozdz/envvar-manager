@@ -1,9 +1,10 @@
 use anyhow::Result;
-use clap::Parser;
+use clap::{CommandFactory, Parser, Subcommand};
+use clap_complete::{generate, Shell};
 use config::Config;
 use std::path::PathBuf;
 
-mod command;
+mod app;
 mod config;
 mod entities;
 mod input;
@@ -19,12 +20,39 @@ struct Cli {
     config: Option<PathBuf>,
 
     #[command(subcommand)]
-    command: command::Command,
+    command: Command,
+}
+
+#[derive(Subcommand)]
+enum Command {
+    #[clap(flatten)]
+    AppCommand(app::Command),
+
+    /// Generate shell completions
+    GenerateCompletions {
+        /// The shell to generate completions for
+        #[arg(value_enum)]
+        shell: Shell,
+    },
 }
 
 fn run(cli: Cli) -> Result<()> {
-    let config = Config::new(cli.config)?;
-    cli.command.run(&config)
+    match cli.command {
+        Command::AppCommand(command) => {
+            let config = Config::new(cli.config)?;
+            command.run(&config)
+        }
+        Command::GenerateCompletions { shell } => {
+            let command = &mut Cli::command();
+            generate(
+                shell,
+                command,
+                command.get_name().to_string(),
+                &mut std::io::stdout(),
+            );
+            Ok(())
+        }
+    }
 }
 
 fn main() {

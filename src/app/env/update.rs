@@ -1,11 +1,10 @@
 use anyhow::Result;
-use clap::Parser;
+use clap::Args;
 
-use crate::entities::env_var::EnvVar;
 use crate::repository::Repository;
 use crate::sqlite::Database;
 
-#[derive(Debug, Parser)]
+#[derive(Args, Debug)]
 pub struct Command {
     name: String,
     value: String,
@@ -13,9 +12,10 @@ pub struct Command {
 
 impl Command {
     pub fn run(&self, db: &Database) -> Result<()> {
-        let env_var = EnvVar::new(self.name.clone(), self.value.clone())?;
+        let mut env_var = db.env_vars.get(&self.name)?;
+        env_var.update(self.value.clone());
 
-        db.env_vars.add(env_var)?;
+        db.env_vars.update(env_var)?;
         Ok(())
     }
 }

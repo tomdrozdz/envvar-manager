@@ -4,33 +4,18 @@ use clap::Subcommand;
 use crate::config::Config;
 use crate::sqlite::{init_connection, Database};
 
-mod add;
+mod env;
 mod export;
-mod list;
-mod remove;
 mod rule;
-mod update;
-mod yubikey;
 
-#[derive(Debug, Subcommand)]
+#[derive(Subcommand, Debug)]
 pub enum Command {
-    /// Add a new environment variable
-    Add(add::Command),
+    /// Manage environment variables
+    #[clap(subcommand)]
+    Env(env::Command),
 
     /// Write export statements with all saved environment variables to stdout
     Export(export::Command),
-
-    /// List all saved environment variables
-    List(list::Command),
-
-    // Remove an environment variable
-    Remove(remove::Command),
-
-    /// Update an environment variable
-    Update(update::Command),
-
-    /// Update the Yubikey value via a GUI input window
-    Yubikey(yubikey::Command),
 
     /// Manage templating rules
     #[clap(subcommand)]
@@ -44,12 +29,8 @@ impl Command {
         let db = Database::new(&db_connection);
 
         match self {
-            Command::Add(add) => add.run(&db),
+            Command::Env(env) => env.run(&db),
             Command::Export(export) => export.run(&db),
-            Command::List(list) => list.run(&db),
-            Command::Remove(remove) => remove.run(&db),
-            Command::Update(update) => update.run(&db),
-            Command::Yubikey(yubikey) => yubikey.run(&db),
             Command::Rule(rule) => rule.run(&db),
         }
     }

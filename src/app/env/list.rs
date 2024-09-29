@@ -1,17 +1,18 @@
 use anyhow::Result;
-use clap::Parser;
+use clap::Args;
+use tabled::Table;
 
 use crate::repository::Repository;
 use crate::sqlite::Database;
 
-#[derive(Debug, Parser)]
-pub struct Command {
-    name: String,
-}
+#[derive(Args, Debug)]
+pub struct Command {}
 
 impl Command {
     pub fn run(&self, db: &Database) -> Result<()> {
-        db.env_vars.remove(&self.name)?;
+        let env_vars = db.env_vars.list()?;
+
+        println!("{}", Table::new(env_vars));
         Ok(())
     }
 }
