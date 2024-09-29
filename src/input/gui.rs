@@ -29,7 +29,7 @@ impl InputWindow {
             Message::InputSubmitted => {
                 self.channel
                     .send(self.input.clone())
-                    .expect("Failed to send input");
+                    .expect("Failed to send input from GUI");
 
                 window::get_latest().and_then(window::close)
             }
@@ -77,6 +77,9 @@ pub fn get_input(prompt: &str) -> Result<String> {
     .theme(|_| Theme::Dark)
     .run_with(|| (input_window, Task::done(Message::FocusInput)))?;
 
-    let output = receiver.recv().context("Failed to receive input")?;
+    let output = receiver
+        .recv()
+        .context("Failed to receive input from GUI")?;
+
     Ok(output)
 }

@@ -26,7 +26,7 @@ impl<'a> repository::Repository<String, Rule> for Repository<'a> {
             .execute("INSERT INTO names (name) VALUES (?1)", params![rule.name])
             .map_err(|err| match err {
                 SqliteFailure(..) => {
-                    anyhow!("Rule or environment variable with the same name already exists")
+                    anyhow!("Rule or environment variable {} already exists", rule.name)
                 }
                 _ => err.into(),
             })?;
@@ -40,12 +40,12 @@ impl<'a> repository::Repository<String, Rule> for Repository<'a> {
         Ok(())
     }
 
-    fn get(&self, id: &String) -> Result<Rule> {
+    fn get(&self, name: &String) -> Result<Rule> {
         let connection = self.connection.borrow();
         let mut stmt =
             connection.prepare("SELECT name, template, updated_at FROM rules WHERE name = ?1")?;
 
-        let mut rows = stmt.query(params![id])?;
+        let mut rows = stmt.query(params![name])?;
         let row = rows.next()?;
         match row {
             Some(row) => {
@@ -56,7 +56,7 @@ impl<'a> repository::Repository<String, Rule> for Repository<'a> {
                 };
                 Ok(rule)
             }
-            None => Err(anyhow!("Rule not found")),
+            None => Err(anyhow!("Rule {name} not found")),
         }
     }
 
@@ -80,16 +80,16 @@ impl<'a> repository::Repository<String, Rule> for Repository<'a> {
         Ok(rules)
     }
 
-    fn remove(&self, id: &String) -> Result<()> {
+    fn remove(&self, name: &String) -> Result<()> {
         let mut binding = self.connection.borrow_mut();
         let transaction = binding.transaction()?;
 
-        let removed = transaction.execute("DELETE FROM rules WHERE name = ?1", params![id])?;
+        let removed = transaction.execute("DELETE FROM rules WHERE name = ?1", params![name])?;
         if removed == 0 {
-            return Err(anyhow!("Rule not found"));
+            return Err(anyhow!("Rule {name} not found"));
         }
 
-        transaction.execute("DELETE FROM names WHERE name = ?1", params![id])?;
+        transaction.execute("DELETE FROM names WHERE name = ?1", params![name])?;
         transaction.commit()?;
         Ok(())
     }
@@ -103,7 +103,7 @@ impl<'a> repository::Repository<String, Rule> for Repository<'a> {
         )?;
 
         if updated == 0 {
-            return Err(anyhow!("Rule not found"));
+            return Err(anyhow!("Rule {} not found", rule.name));
         }
 
         Ok(())

@@ -28,7 +28,10 @@ impl<'a> repository::Repository<String, EnvVar> for Repository<'a> {
             )
             .map_err(|err| match err {
                 SqliteFailure(..) => {
-                    anyhow!("Environment variable or rule with the same name already exists")
+                    anyhow!(
+                        "Environment variable or rule {} already exists",
+                        env_var.name
+                    )
                 }
                 _ => err.into(),
             })?;
@@ -58,7 +61,7 @@ impl<'a> repository::Repository<String, EnvVar> for Repository<'a> {
                 };
                 Ok(env_var)
             }
-            None => Err(anyhow!("Environment variable not found")),
+            None => Err(anyhow!("Environment variable {name} not found")),
         }
     }
 
