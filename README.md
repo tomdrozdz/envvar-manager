@@ -3,6 +3,19 @@
 Useful when you need to set the same variables all the time and update tokens or
 YubiKeys.
 
+## Usage
+
+```bash
+em add TOKEN 123456
+em rule add AUTH_TOKEN "Bearer {TOKEN}"
+
+alias getenv='eval "$(em export)"'
+getenv
+
+echo "TOKEN=$TOKEN"
+echo "AUTH_TOKEN=$AUTH_TOKEN"
+```
+
 ## TODO
 
 * Generate CLI completions.
