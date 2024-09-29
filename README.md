@@ -6,6 +6,12 @@ YubiKeys.
 ## Usage
 
 ```bash
+em --help
+```
+
+## Example
+
+```bash
 em add TOKEN 123456
 em rule add AUTH_TOKEN "Bearer {TOKEN}"
 
