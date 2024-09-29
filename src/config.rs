@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields, default, rename_all = "kebab-case")]
 pub struct Config {
-    database_path: PathBuf,
+    pub database_path: PathBuf,
 }
 
 impl Config {

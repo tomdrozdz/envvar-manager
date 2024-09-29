@@ -5,6 +5,11 @@ use std::path::PathBuf;
 
 mod command;
 mod config;
+mod entities;
+mod gui;
+mod repository;
+mod resolver;
+mod sqlite;
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
