@@ -1,0 +1,17 @@
+CREATE TABLE IF NOT EXISTS names (
+    name TEXT PRIMARY KEY
+);
+
+CREATE TABLE IF NOT EXISTS env_vars (
+    name TEXT PRIMARY KEY,
+    value TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY(name) REFERENCES names(name) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS rules (
+    name TEXT PRIMARY KEY,
+    template TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY(name) REFERENCES names(name) ON DELETE CASCADE
+);
