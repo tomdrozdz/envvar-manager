@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
+use std::cell::RefCell;
 
 use anyhow::{anyhow, Result};
 use rusqlite::{params, Connection, Error::SqliteFailure};
@@ -7,17 +7,17 @@ use crate::entities::rule::Rule;
 use crate::repository;
 
 #[derive(Debug)]
-pub struct Repository {
-    connection: Rc<RefCell<Connection>>,
+pub struct Repository<'a> {
+    connection: &'a RefCell<Connection>,
 }
 
-impl Repository {
-    pub fn new(conn: Rc<RefCell<Connection>>) -> Repository {
-        Self { connection: conn }
+impl<'a> Repository<'a> {
+    pub fn new(connection: &'a RefCell<Connection>) -> Self {
+        Self { connection }
     }
 }
 
-impl repository::Repository<String, Rule> for Repository {
+impl<'a> repository::Repository<String, Rule> for Repository<'a> {
     fn add(&self, rule: Rule) -> Result<()> {
         let mut binding = self.connection.borrow_mut();
         let transaction = binding.transaction()?;
@@ -62,8 +62,8 @@ impl repository::Repository<String, Rule> for Repository {
 
     fn list(&self) -> Result<Vec<Rule>> {
         let connection = self.connection.borrow();
-
         let mut stmt = connection.prepare("SELECT name, template, updated_at FROM rules")?;
+
         let rows = stmt.query_map([], |row| {
             Ok(Rule {
                 name: row.get(0)?,

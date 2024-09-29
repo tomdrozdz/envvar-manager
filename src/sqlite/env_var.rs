@@ -1,21 +1,22 @@
-use std::{cell::RefCell, rc::Rc};
+use std::cell::RefCell;
 
-use crate::{entities::env_var::EnvVar, repository};
 use anyhow::{anyhow, Result};
 use rusqlite::{params, Connection, Error::SqliteFailure};
 
+use crate::{entities::env_var::EnvVar, repository};
+
 #[derive(Debug)]
-pub struct Repository {
-    connection: Rc<RefCell<Connection>>,
+pub struct Repository<'a> {
+    connection: &'a RefCell<Connection>,
 }
 
-impl Repository {
-    pub fn new(connection: Rc<RefCell<Connection>>) -> Self {
+impl<'a> Repository<'a> {
+    pub fn new(connection: &'a RefCell<Connection>) -> Self {
         Self { connection }
     }
 }
 
-impl repository::Repository<String, EnvVar> for Repository {
+impl<'a> repository::Repository<String, EnvVar> for Repository<'a> {
     fn add(&self, env_var: EnvVar) -> Result<()> {
         let mut binding = self.connection.borrow_mut();
         let transaction = binding.transaction()?;

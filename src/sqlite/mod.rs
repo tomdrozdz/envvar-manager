@@ -1,4 +1,4 @@
-use std::{cell::RefCell, path::PathBuf, rc::Rc};
+use std::{cell::RefCell, path::PathBuf};
 
 use anyhow::Result;
 use include_dir::{include_dir, Dir};
@@ -10,39 +10,35 @@ mod env_var;
 mod rule;
 
 static MIGRATIONS_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/migrations");
-
-// Define migrations. These are applied atomically.
 lazy_static! {
     static ref MIGRATIONS: Migrations<'static> =
         Migrations::from_directory(&MIGRATIONS_DIR).unwrap();
 }
 
-pub fn init_connection(path: &PathBuf) -> Result<Connection> {
+pub fn init_connection(path: &PathBuf) -> Result<RefCell<Connection>> {
     if !path.exists() {
         let directory = path.parent().unwrap();
         std::fs::create_dir_all(directory)?;
     }
 
-    let mut conn = Connection::open(path)?;
-    MIGRATIONS.to_latest(&mut conn)?;
-    conn.pragma_update(None, "foreign_keys", "ON")?;
+    let mut connection = Connection::open(path)?;
+    MIGRATIONS.to_latest(&mut connection)?;
+    connection.pragma_update(None, "foreign_keys", "ON")?;
 
-    Ok(conn)
+    Ok(RefCell::new(connection))
 }
 
 #[derive(Debug)]
-pub struct Database {
-    pub env_vars: env_var::Repository,
-    pub rules: rule::Repository,
+pub struct Database<'a> {
+    pub env_vars: env_var::Repository<'a>,
+    pub rules: rule::Repository<'a>,
 }
 
-impl Database {
-    pub fn new(conn: Connection) -> Result<Self> {
-        let conn_ref = Rc::new(RefCell::new(conn));
-
-        Ok(Self {
-            env_vars: env_var::Repository::new(Rc::clone(&conn_ref)),
-            rules: rule::Repository::new(conn_ref),
-        })
+impl<'a> Database<'a> {
+    pub fn new(connection: &'a RefCell<Connection>) -> Self {
+        Self {
+            env_vars: env_var::Repository::new(connection),
+            rules: rule::Repository::new(connection),
+        }
     }
 }

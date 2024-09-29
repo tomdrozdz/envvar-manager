@@ -41,7 +41,7 @@ impl Command {
     pub fn run(&self, config: &Config) -> Result<()> {
         log::debug!("Running command {:?} with config {:?}", self, config);
         let db_connection = init_connection(&config.database_path)?;
-        let db = Database::new(db_connection)?;
+        let db = Database::new(&db_connection);
 
         match self {
             Command::Add(add) => add.run(&db),
