@@ -25,6 +25,8 @@ echo "AUTH_TOKEN=$AUTH_TOKEN"
 ## TODO
 
 * Generate CLI completions.
+* Add 'secret' EnvVars that will be transformed to `****` in `em list`.
+* Shorten long EnvVars in `em list` and add a `em get` to get the full value.
 * Current transaction handling is awful, should be moved out of the repositories.
     * Possible idea: return a `Transaction` from a method, then pass them to other
       repository methods, commit at the end of a command.
