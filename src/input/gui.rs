@@ -1,75 +1,82 @@
 use std::sync::mpsc::{channel, Sender};
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result};
 
-use eframe::egui;
+use iced::widget::{button, center, row, text, text_input};
+use iced::window::Level;
+use iced::{window, Center, Element, Size, Task, Theme};
 
-pub struct InputApp {
-    prompt: String,
+struct InputWindow {
+    label: String,
     input: String,
-    sender: Sender<String>,
+    channel: Sender<String>,
 }
 
-impl InputApp {
-    /// Called once before the first frame.
-    pub fn new(cc: &eframe::CreationContext<'_>, prompt: String, sender: Sender<String>) -> Self {
-        // This is also where you can customize the look and feel of egui using
-        // `cc.egui_ctx.set_visuals` and `cc.egui_ctx.set_fonts`.
+#[derive(Debug, Clone)]
+enum Message {
+    InputChanged(String),
+    InputSubmitted,
+    FocusInput,
+}
 
-        Self {
-            prompt,
-            input: String::new(),
-            sender,
+impl InputWindow {
+    fn update(&mut self, message: Message) -> Task<Message> {
+        match message {
+            Message::InputChanged(value) => {
+                self.input = value;
+                Task::none()
+            }
+            Message::InputSubmitted => {
+                self.channel
+                    .send(self.input.clone())
+                    .expect("Failed to send input");
+
+                window::get_latest().and_then(window::close)
+            }
+            Message::FocusInput => text_input::focus("input"),
         }
     }
-}
 
-impl eframe::App for InputApp {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        // Put your widgets into a `SidePanel`, `TopBottomPanel`, `CentralPanel`, `Window` or `Area`.
-        // For inspiration and more examples, go to https://emilk.github.io/egui
+    fn view(&self) -> Element<Message> {
+        let text_input = text_input(&self.label, &self.input)
+            .on_input(Message::InputChanged)
+            .on_submit(Message::InputSubmitted)
+            .id("input")
+            .padding(10)
+            .size(32);
 
-        egui::CentralPanel::default().show(ctx, |ui| {
-            ui.horizontal_centered(|ui| {
-                ui.label(&self.prompt);
+        let button = button(text("Submit").size(32))
+            .on_press(Message::InputSubmitted)
+            .padding(10);
 
-                let text = ui.text_edit_singleline(&mut self.input);
-                let button = ui.button("Submit");
+        let content = row![text_input, button]
+            .align_y(Center)
+            .spacing(10)
+            .padding(20);
 
-                if (text.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)))
-                    || button.clicked()
-                {
-                    self.sender.send(self.input.clone()).unwrap();
-                    ctx.send_viewport_cmd(egui::ViewportCommand::Close);
-                }
-            });
-        });
+        center(content).into()
     }
 }
 
 pub fn get_input(prompt: &str) -> Result<String> {
-    let native_options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default(),
-        ..Default::default()
+    let (sender, receiver) = channel::<String>();
+    let input_window = InputWindow {
+        label: prompt.to_string(),
+        input: String::new(),
+        channel: sender,
     };
 
-    let (sender, receiver) = channel::<String>();
-    let res = eframe::run_native(
+    iced::application(
         "EnvVar Manager: Input window",
-        native_options,
-        Box::new(|cc| Ok(Box::new(InputApp::new(cc, prompt.to_string(), sender)))),
-    );
+        InputWindow::update,
+        InputWindow::view,
+    )
+    .window_size(Size::new(900.0, 120.0))
+    .centered()
+    .level(Level::AlwaysOnTop)
+    .theme(|_| Theme::Dark)
+    .run_with(|| (input_window, Task::done(Message::FocusInput)))?;
 
-    let out = receiver
-        .recv()
-        .context("Failed to receive input from GUI")?;
-
-    match res {
-        Ok(()) => {}
-        Err(e) => {
-            return Err(anyhow!("Error: {}", e));
-        }
-    }
-
-    Ok(out)
+    let output = receiver.recv().context("Failed to receive input")?;
+    Ok(output)
 }
