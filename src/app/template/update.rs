@@ -1,18 +1,21 @@
 use anyhow::Result;
 use clap::Args;
-use tabled::Table;
 
 use crate::repository::Repository;
 use crate::sqlite::Database;
 
 #[derive(Args, Debug)]
-pub struct Command {}
+pub struct Command {
+    name: String,
+    pattern: String,
+}
 
 impl Command {
     pub fn run(&self, db: &Database) -> Result<()> {
-        let rules = db.rules.list()?;
+        let mut template = db.templates.get(&self.name)?;
+        template.update(self.pattern.clone())?;
 
-        println!("{}", Table::new(rules));
+        db.templates.update(template)?;
         Ok(())
     }
 }

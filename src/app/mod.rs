@@ -6,7 +6,7 @@ use crate::sqlite::{init_connection, Database};
 
 mod env;
 mod export;
-mod rule;
+mod template;
 
 #[derive(Subcommand, Debug)]
 pub enum Command {
@@ -17,9 +17,9 @@ pub enum Command {
     /// Write export statements with all saved environment variables to stdout
     Export(export::Command),
 
-    /// Manage templating rules
+    /// Manage variable templates
     #[clap(subcommand)]
-    Rule(rule::Command),
+    Template(template::Command),
 }
 
 impl Command {
@@ -31,7 +31,7 @@ impl Command {
         match self {
             Command::Env(env) => env.run(&db),
             Command::Export(export) => export.run(&db),
-            Command::Rule(rule) => rule.run(&db),
+            Command::Template(template) => template.run(&db),
         }
     }
 }

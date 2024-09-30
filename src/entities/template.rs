@@ -3,28 +3,28 @@ use chrono::{DateTime, Utc};
 use tabled::Tabled;
 
 #[derive(Debug, Tabled)]
-pub struct Rule {
+pub struct Template {
     pub name: String,
-    pub template: String,
+    pub pattern: String,
     pub updated_at: DateTime<Utc>,
 }
 
-impl Rule {
-    pub fn new(name: String, template: String) -> Result<Self> {
+impl Template {
+    pub fn new(name: String, pattern: String) -> Result<Self> {
         validate_name(&name)?;
-        validate_template(&template)?;
+        validate_pattern(&pattern)?;
 
         Ok(Self {
             name,
-            template,
+            pattern,
             updated_at: Utc::now(),
         })
     }
 
-    pub fn update(&mut self, template: String) -> Result<()> {
-        validate_template(&template)?;
+    pub fn update(&mut self, pattern: String) -> Result<()> {
+        validate_pattern(&pattern)?;
 
-        self.template = template;
+        self.pattern = pattern;
         self.updated_at = Utc::now();
 
         Ok(())
@@ -39,13 +39,13 @@ fn validate_name(name: &str) -> Result<()> {
     Ok(())
 }
 
-fn validate_template(template: &str) -> Result<()> {
-    let mut chars = template.chars();
+fn validate_pattern(pattern: &str) -> Result<()> {
+    let mut chars = pattern.chars();
     let mut var_count = 0;
 
     while let Some(c) = chars.next() {
         if c == '}' {
-            return Err(anyhow!("Template {template} contains unopened braces"));
+            return Err(anyhow!("Pattern {pattern} contains unopened braces"));
         }
 
         if c == '{' {
@@ -57,12 +57,12 @@ fn validate_template(template: &str) -> Result<()> {
                 }
 
                 if c == '{' {
-                    return Err(anyhow!("Template {template} contains nested braces"));
+                    return Err(anyhow!("Pattern {pattern} contains nested braces"));
                 }
 
                 if !c.is_ascii_alphanumeric() {
                     return Err(anyhow!(
-                        "Variable name in {template} template contains invalid characters"
+                        "Variable name in {pattern} pattern contains invalid characters"
                     ));
                 }
 
@@ -70,7 +70,7 @@ fn validate_template(template: &str) -> Result<()> {
             }
 
             if length == 0 {
-                return Err(anyhow!("Template {template} contains empty braces"));
+                return Err(anyhow!("Pattern {pattern} contains empty braces"));
             }
 
             var_count += 1;
@@ -78,9 +78,7 @@ fn validate_template(template: &str) -> Result<()> {
     }
 
     if var_count == 0 {
-        return Err(anyhow!(
-            "Template {template} does not contain any variables"
-        ));
+        return Err(anyhow!("Pattern {pattern} does not contain any variables"));
     }
 
     Ok(())

@@ -11,7 +11,7 @@ pub struct Command {
 
 impl Command {
     pub fn run(&self, db: &Database) -> Result<()> {
-        db.rules.remove(&self.name)?;
+        db.templates.remove(&self.name)?;
         Ok(())
     }
 }

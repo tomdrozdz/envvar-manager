@@ -7,7 +7,7 @@ use rusqlite::Connection;
 use rusqlite_migration::Migrations;
 
 mod env_var;
-mod rule;
+mod template;
 
 static MIGRATIONS_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/migrations");
 lazy_static! {
@@ -31,14 +31,14 @@ pub fn init_connection(path: &PathBuf) -> Result<RefCell<Connection>> {
 #[derive(Debug)]
 pub struct Database<'a> {
     pub env_vars: env_var::Repository<'a>,
-    pub rules: rule::Repository<'a>,
+    pub templates: template::Repository<'a>,
 }
 
 impl<'a> Database<'a> {
     pub fn new(connection: &'a RefCell<Connection>) -> Self {
         Self {
             env_vars: env_var::Repository::new(connection),
-            rules: rule::Repository::new(connection),
+            templates: template::Repository::new(connection),
         }
     }
 }

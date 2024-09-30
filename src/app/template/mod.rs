@@ -10,16 +10,16 @@ mod update;
 
 #[derive(Subcommand, Debug)]
 pub enum Command {
-    /// Add a new templating rule
+    /// Add a new variable template
     Add(add::Command),
 
-    /// List all templating rules
+    /// List all variable templates
     List(list::Command),
 
-    /// Remove a templating rule
+    /// Remove a variable template
     Remove(remove::Command),
 
-    /// Update a templating rule
+    /// Update a variable template
     Update(update::Command),
 }
 

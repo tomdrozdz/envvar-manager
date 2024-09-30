@@ -13,7 +13,7 @@ em --help
 
 ```bash
 em env add TOKEN 123456
-em rule add AUTH_TOKEN "Bearer {TOKEN}"
+em template add AUTH_TOKEN "Bearer {TOKEN}"
 
 alias getenv='eval "$(em export)"'
 getenv

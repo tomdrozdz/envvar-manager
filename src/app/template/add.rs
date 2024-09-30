@@ -1,21 +1,21 @@
 use anyhow::Result;
 use clap::Args;
 
-use crate::entities::rule::Rule;
+use crate::entities::template::Template;
 use crate::repository::Repository;
 use crate::sqlite::Database;
 
 #[derive(Args, Debug)]
 pub struct Command {
     name: String,
-    template: String,
+    pattern: String,
 }
 
 impl Command {
     pub fn run(&self, db: &Database) -> Result<()> {
-        let rule = Rule::new(self.name.clone(), self.template.clone())?;
+        let template = Template::new(self.name.clone(), self.pattern.clone())?;
 
-        db.rules.add(rule)?;
+        db.templates.add(template)?;
         Ok(())
     }
 }

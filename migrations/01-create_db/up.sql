@@ -9,9 +9,9 @@ CREATE TABLE IF NOT EXISTS env_vars (
     FOREIGN KEY(name) REFERENCES names(name) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS rules (
+CREATE TABLE IF NOT EXISTS templates (
     name TEXT PRIMARY KEY,
-    template TEXT NOT NULL,
+    pattern TEXT NOT NULL,
     updated_at TEXT NOT NULL,
     FOREIGN KEY(name) REFERENCES names(name) ON DELETE CASCADE
 );

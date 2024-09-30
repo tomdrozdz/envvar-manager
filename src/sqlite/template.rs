@@ -3,7 +3,8 @@ use std::cell::RefCell;
 use anyhow::{anyhow, Result};
 use rusqlite::{params, Connection, Error::SqliteFailure};
 
-use crate::{entities::env_var::EnvVar, repository};
+use crate::entities::template::Template;
+use crate::repository;
 
 #[derive(Debug)]
 pub struct Repository<'a> {
@@ -16,75 +17,80 @@ impl<'a> Repository<'a> {
     }
 }
 
-impl<'a> repository::Repository<String, EnvVar> for Repository<'a> {
-    fn add(&self, env_var: EnvVar) -> Result<()> {
+impl<'a> repository::Repository<String, Template> for Repository<'a> {
+    fn add(&self, template: Template) -> Result<()> {
         let mut binding = self.connection.borrow_mut();
         let transaction = binding.transaction()?;
 
         transaction
             .execute(
                 "INSERT INTO names (name) VALUES (?1)",
-                params![env_var.name],
+                params![template.name],
             )
             .map_err(|err| match err {
                 SqliteFailure(..) => {
                     anyhow!(
-                        "Environment variable or template {} already exists",
-                        env_var.name
+                        "Template or environment variable {} already exists",
+                        template.name
                     )
                 }
                 _ => err.into(),
             })?;
 
         transaction.execute(
-            "INSERT INTO env_vars (name, value, updated_at) VALUES (?1, ?2, ?3)",
-            params![env_var.name, env_var.value, env_var.updated_at],
+            "INSERT INTO templates (name, pattern, updated_at) VALUES (?1, ?2, ?3)",
+            params![template.name, template.pattern, template.updated_at],
         )?;
 
         transaction.commit()?;
         Ok(())
     }
 
-    fn get(&self, name: &String) -> Result<EnvVar> {
+    fn get(&self, name: &String) -> Result<Template> {
         let connection = self.connection.borrow();
-        let mut stmt =
-            connection.prepare("SELECT name, value, updated_at FROM env_vars WHERE name = ?1")?;
+        let mut stmt = connection
+            .prepare("SELECT name, pattern, updated_at FROM templates WHERE name = ?1")?;
 
         let mut rows = stmt.query(params![name])?;
         let row = rows.next()?;
         match row {
-            Some(row) => Ok(EnvVar {
+            Some(row) => Ok(Template {
                 name: row.get(0)?,
-                value: row.get(1)?,
+                pattern: row.get(1)?,
                 updated_at: row.get(2)?,
             }),
-            None => Err(anyhow!("Environment variable {name} not found")),
+            None => Err(anyhow!("Template {name} not found")),
         }
     }
 
-    fn list(&self) -> Result<Vec<EnvVar>> {
+    fn list(&self) -> Result<Vec<Template>> {
         let connection = self.connection.borrow();
-        let mut stmt = connection.prepare("SELECT name, value, updated_at FROM env_vars")?;
+        let mut stmt = connection.prepare("SELECT name, pattern, updated_at FROM templates")?;
 
         let rows = stmt.query_map([], |row| {
-            Ok(EnvVar {
+            Ok(Template {
                 name: row.get(0)?,
-                value: row.get(1)?,
+                pattern: row.get(1)?,
                 updated_at: row.get(2)?,
             })
         })?;
 
-        let env_vars = rows.collect::<Result<_, _>>()?;
-        Ok(env_vars)
+        let mut templates = Vec::new();
+        for template in rows {
+            templates.push(template?);
+        }
+
+        Ok(templates)
     }
 
     fn remove(&self, name: &String) -> Result<()> {
         let mut binding = self.connection.borrow_mut();
         let transaction = binding.transaction()?;
 
-        let removed = transaction.execute("DELETE FROM env_vars WHERE name = ?1", params![name])?;
+        let removed =
+            transaction.execute("DELETE FROM templates WHERE name = ?1", params![name])?;
         if removed == 0 {
-            return Err(anyhow!("Environment variable {name} not found"));
+            return Err(anyhow!("Template {name} not found"));
         }
 
         transaction.execute("DELETE FROM names WHERE name = ?1", params![name])?;
@@ -92,16 +98,16 @@ impl<'a> repository::Repository<String, EnvVar> for Repository<'a> {
         Ok(())
     }
 
-    fn update(&self, env_var: EnvVar) -> Result<()> {
+    fn update(&self, template: Template) -> Result<()> {
         let connection = self.connection.borrow();
 
         let updated = connection.execute(
-            "UPDATE env_vars SET value = ?2, updated_at = ?3 WHERE name = ?1",
-            params![env_var.name, env_var.value, env_var.updated_at],
+            "UPDATE templates SET pattern = ?2, updated_at = ?3 WHERE name = ?1",
+            params![template.name, template.pattern, template.updated_at],
         )?;
 
         if updated == 0 {
-            return Err(anyhow!("Environment variable {} not found", env_var.name));
+            return Err(anyhow!("Template {} not found", template.name));
         }
 
         Ok(())
