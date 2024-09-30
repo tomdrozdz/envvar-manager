@@ -60,7 +60,7 @@ fn validate_pattern(pattern: &str) -> Result<()> {
                     return Err(anyhow!("Pattern {pattern} contains nested braces"));
                 }
 
-                if !c.is_ascii_alphanumeric() {
+                if !(c.is_ascii_alphanumeric() || c == '_') {
                     return Err(anyhow!(
                         "Variable name in {pattern} pattern contains invalid characters"
                     ));
