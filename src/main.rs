@@ -29,8 +29,8 @@ enum Command {
     AppCommand(app::Command),
 
     /// Generate shell completions
-    GenerateCompletions {
-        /// The shell to generate completions for
+    Completion {
+        /// Shell to generate completions for
         #[arg(value_enum)]
         shell: Shell,
     },
@@ -42,7 +42,7 @@ fn run(cli: Cli) -> Result<()> {
             let config = Config::new(cli.config)?;
             command.run(&config)
         }
-        Command::GenerateCompletions { shell } => {
+        Command::Completion { shell } => {
             let command = &mut Cli::command();
             generate(
                 shell,
