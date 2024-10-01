@@ -1,7 +1,10 @@
 # EnvVar manager
 
-Useful when you need to set the same variables all the time and update tokens or
-YubiKeys.
+For when you need to set the same variables all the time, concatenate some of them
+together, share them between different shells, and update tokens or YubiKeys.
+
+Small warning: I made this only because I wanted to learn Rust. This is not good code.
+It is probably considered insecure, but I'm actually using it and it is quite useful.
 
 ## Usage
 
