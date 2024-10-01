@@ -5,17 +5,17 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0"
-chrono = "*"
+chrono = "0.4"
 clap = { version = "4.5", features = ["derive"] }
 clap_complete = "4.5"
 dirs = "5.0"
 env_logger = "0.11"
 iced = "0.13"
-include_dir = "0.7.4"
-lazy_static = "1.5.0"
+include_dir = "0.7"
+lazy_static = "1.5"
 log = "0.4"
 rusqlite = { version = "0.31", features = ["chrono"] }
-rusqlite_migration = { version = "1.2.0", features = ["from-directory"] }
+rusqlite_migration = { version = "1.2", features = ["from-directory"] }
 serde = { version = "1.0", features = ["derive"] }
 tabled = "0.16"
 toml = "0.8"
