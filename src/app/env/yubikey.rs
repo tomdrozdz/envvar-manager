@@ -25,10 +25,10 @@ impl Command {
         let name = "YUBIKEY".to_string();
 
         if let Ok(mut env_var) = db.env_vars.get(&name) {
-            env_var.update(yubikey);
+            env_var.update_value(yubikey);
             db.env_vars.update(env_var)?;
         } else {
-            let env_var = EnvVar::new(name, yubikey)?;
+            let env_var = EnvVar::new(name, yubikey, true)?;
             db.env_vars.add(env_var)?;
         };
 

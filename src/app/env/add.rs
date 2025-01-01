@@ -9,11 +9,15 @@ use crate::sqlite::Database;
 pub struct Command {
     name: String,
     value: String,
+
+    /// Do not show the value when listing
+    #[clap(short, long)]
+    secret: bool,
 }
 
 impl Command {
     pub fn run(&self, db: &Database) -> Result<()> {
-        let env_var = EnvVar::new(self.name.clone(), self.value.clone())?;
+        let env_var = EnvVar::new(self.name.clone(), self.value.clone(), self.secret)?;
 
         db.env_vars.add(env_var)?;
         Ok(())

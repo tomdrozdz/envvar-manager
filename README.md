@@ -15,7 +15,7 @@ em --help
 ## Example
 
 ```bash
-em env add TOKEN 123456
+em env add TOKEN 123456 --secret
 em template add AUTH_TOKEN "Bearer {TOKEN}"
 
 alias getenv='eval "$(em export)"'
@@ -27,8 +27,7 @@ echo "AUTH_TOKEN=$AUTH_TOKEN"
 
 ## TODO
 
-* Add 'secret' EnvVars that will be transformed to `****` in `em list`.
-* Shorten long EnvVars in `em list` and add a `em get` to get the full value.
+* Add a `em get` to get the full value of a single variable/template.
 * Current transaction and connection handling is awful, should be moved out of the
   repositories, but I wanted to try to do something with lifetimes for now.
     * Probable solution: the `Db` struct should hold a connection pool. The commands

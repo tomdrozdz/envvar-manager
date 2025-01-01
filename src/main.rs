@@ -8,6 +8,7 @@ mod app;
 mod config;
 mod entities;
 mod input;
+mod output;
 mod repository;
 mod resolver;
 mod sqlite;

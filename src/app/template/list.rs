@@ -1,7 +1,10 @@
 use anyhow::Result;
 use clap::Args;
+use tabled::settings::peaker::PriorityMax;
+use tabled::settings::{Style, Width};
 use tabled::Table;
 
+use crate::output::get_terminal_size;
 use crate::repository::Repository;
 use crate::sqlite::Database;
 
@@ -12,7 +15,13 @@ impl Command {
     pub fn run(&self, db: &Database) -> Result<()> {
         let templates = db.templates.list()?;
 
-        println!("{}", Table::new(templates));
+        let mut table = Table::new(templates);
+        let (width, _) = get_terminal_size();
+
+        table.with(Style::modern());
+        table.with(Width::wrap(width).priority(PriorityMax));
+
+        println!("{table}");
         Ok(())
     }
 }

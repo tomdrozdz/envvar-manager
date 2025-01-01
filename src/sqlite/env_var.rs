@@ -37,8 +37,13 @@ impl<'a> repository::Repository<String, EnvVar> for Repository<'a> {
             })?;
 
         transaction.execute(
-            "INSERT INTO env_vars (name, value, updated_at) VALUES (?1, ?2, ?3)",
-            params![env_var.name, env_var.value, env_var.updated_at],
+            "INSERT INTO env_vars (name, value, secret, updated_at) VALUES (?1, ?2, ?3, ?4)",
+            params![
+                env_var.name,
+                env_var.value,
+                env_var.secret,
+                env_var.updated_at
+            ],
         )?;
 
         transaction.commit()?;
@@ -47,8 +52,8 @@ impl<'a> repository::Repository<String, EnvVar> for Repository<'a> {
 
     fn get(&self, name: &String) -> Result<EnvVar> {
         let connection = self.connection.borrow();
-        let mut stmt =
-            connection.prepare("SELECT name, value, updated_at FROM env_vars WHERE name = ?1")?;
+        let mut stmt = connection
+            .prepare("SELECT name, value, secret, updated_at FROM env_vars WHERE name = ?1")?;
 
         let mut rows = stmt.query(params![name])?;
         let row = rows.next()?;
@@ -56,7 +61,8 @@ impl<'a> repository::Repository<String, EnvVar> for Repository<'a> {
             Some(row) => Ok(EnvVar {
                 name: row.get(0)?,
                 value: row.get(1)?,
-                updated_at: row.get(2)?,
+                secret: row.get(2)?,
+                updated_at: row.get(3)?,
             }),
             None => Err(anyhow!("Environment variable {name} not found")),
         }
@@ -64,13 +70,15 @@ impl<'a> repository::Repository<String, EnvVar> for Repository<'a> {
 
     fn list(&self) -> Result<Vec<EnvVar>> {
         let connection = self.connection.borrow();
-        let mut stmt = connection.prepare("SELECT name, value, updated_at FROM env_vars")?;
+        let mut stmt =
+            connection.prepare("SELECT name, value, secret, updated_at FROM env_vars")?;
 
         let rows = stmt.query_map([], |row| {
             Ok(EnvVar {
                 name: row.get(0)?,
                 value: row.get(1)?,
-                updated_at: row.get(2)?,
+                secret: row.get(2)?,
+                updated_at: row.get(3)?,
             })
         })?;
 
@@ -96,8 +104,13 @@ impl<'a> repository::Repository<String, EnvVar> for Repository<'a> {
         let connection = self.connection.borrow();
 
         let updated = connection.execute(
-            "UPDATE env_vars SET value = ?2, updated_at = ?3 WHERE name = ?1",
-            params![env_var.name, env_var.value, env_var.updated_at],
+            "UPDATE env_vars SET value = ?2, secret = ?3, updated_at = ?4 WHERE name = ?1",
+            params![
+                env_var.name,
+                env_var.value,
+                env_var.secret,
+                env_var.updated_at
+            ],
         )?;
 
         if updated == 0 {
