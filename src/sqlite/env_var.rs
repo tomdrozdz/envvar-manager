@@ -1,26 +1,13 @@
-use std::cell::RefCell;
-
 use anyhow::{anyhow, Result};
-use rusqlite::{params, Connection, Error::SqliteFailure};
+use rusqlite::{params, Error::SqliteFailure, Transaction};
 
 use crate::{entities::env_var::EnvVar, repository};
 
-#[derive(Debug)]
-pub struct Repository<'a> {
-    connection: &'a RefCell<Connection>,
-}
+#[derive(Debug, Default)]
+pub struct Repository;
 
-impl<'a> Repository<'a> {
-    pub fn new(connection: &'a RefCell<Connection>) -> Self {
-        Self { connection }
-    }
-}
-
-impl<'a> repository::Repository<String, EnvVar> for Repository<'a> {
-    fn add(&self, env_var: EnvVar) -> Result<()> {
-        let mut binding = self.connection.borrow_mut();
-        let transaction = binding.transaction()?;
-
+impl repository::Repository<String, EnvVar, Transaction<'_>> for Repository {
+    fn add(&self, transaction: &Transaction, env_var: EnvVar) -> Result<()> {
         transaction
             .execute(
                 "INSERT INTO names (name) VALUES (?1)",
@@ -46,13 +33,11 @@ impl<'a> repository::Repository<String, EnvVar> for Repository<'a> {
             ],
         )?;
 
-        transaction.commit()?;
         Ok(())
     }
 
-    fn get(&self, name: &String) -> Result<EnvVar> {
-        let connection = self.connection.borrow();
-        let mut stmt = connection
+    fn get(&self, transaction: &Transaction, name: &String) -> Result<EnvVar> {
+        let mut stmt = transaction
             .prepare("SELECT name, value, secret, updated_at FROM env_vars WHERE name = ?1")?;
 
         let mut rows = stmt.query(params![name])?;
@@ -68,10 +53,9 @@ impl<'a> repository::Repository<String, EnvVar> for Repository<'a> {
         }
     }
 
-    fn list(&self) -> Result<Vec<EnvVar>> {
-        let connection = self.connection.borrow();
+    fn list(&self, transaction: &Transaction) -> Result<Vec<EnvVar>> {
         let mut stmt =
-            connection.prepare("SELECT name, value, secret, updated_at FROM env_vars")?;
+            transaction.prepare("SELECT name, value, secret, updated_at FROM env_vars")?;
 
         let rows = stmt.query_map([], |row| {
             Ok(EnvVar {
@@ -86,24 +70,18 @@ impl<'a> repository::Repository<String, EnvVar> for Repository<'a> {
         Ok(env_vars)
     }
 
-    fn remove(&self, name: &String) -> Result<()> {
-        let mut binding = self.connection.borrow_mut();
-        let transaction = binding.transaction()?;
-
+    fn remove(&self, transaction: &Transaction, name: &String) -> Result<()> {
         let removed = transaction.execute("DELETE FROM env_vars WHERE name = ?1", params![name])?;
         if removed == 0 {
             return Err(anyhow!("Environment variable {name} not found"));
         }
 
         transaction.execute("DELETE FROM names WHERE name = ?1", params![name])?;
-        transaction.commit()?;
         Ok(())
     }
 
-    fn update(&self, env_var: EnvVar) -> Result<()> {
-        let connection = self.connection.borrow();
-
-        let updated = connection.execute(
+    fn update(&self, transaction: &Transaction, env_var: EnvVar) -> Result<()> {
+        let updated = transaction.execute(
             "UPDATE env_vars SET value = ?2, secret = ?3, updated_at = ?4 WHERE name = ?1",
             params![
                 env_var.name,

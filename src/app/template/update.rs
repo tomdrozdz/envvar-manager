@@ -12,10 +12,10 @@ pub struct Command {
 
 impl Command {
     pub fn run(&self, db: &Database) -> Result<()> {
-        let mut template = db.templates.get(&self.name)?;
-        template.update(self.pattern.clone())?;
-
-        db.templates.update(template)?;
-        Ok(())
+        db.transaction(|transaction| {
+            let mut template = db.templates.get(transaction, &self.name)?;
+            template.update_pattern(self.pattern.clone())?;
+            db.templates.update(transaction, template)
+        })
     }
 }

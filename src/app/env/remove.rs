@@ -11,7 +11,6 @@ pub struct Command {
 
 impl Command {
     pub fn run(&self, db: &Database) -> Result<()> {
-        db.env_vars.remove(&self.name)?;
-        Ok(())
+        db.transaction(|transaction| db.env_vars.remove(transaction, &self.name))
     }
 }

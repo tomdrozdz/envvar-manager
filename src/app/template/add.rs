@@ -14,8 +14,6 @@ pub struct Command {
 impl Command {
     pub fn run(&self, db: &Database) -> Result<()> {
         let template = Template::new(self.name.clone(), self.pattern.clone())?;
-
-        db.templates.add(template)?;
-        Ok(())
+        db.transaction(|transaction| db.templates.add(transaction, template))
     }
 }

@@ -11,8 +11,11 @@ pub struct Command {}
 
 impl Command {
     pub fn run(&self, db: &Database) -> Result<()> {
-        let env_vars = db.env_vars.list()?;
-        let templates = db.templates.list()?;
+        let (env_vars, templates) = db.transaction(|transaction| {
+            let env_vars = db.env_vars.list(transaction)?;
+            let templates = db.templates.list(transaction)?;
+            Ok((env_vars, templates))
+        })?;
 
         let template_vars = resolve(&env_vars, &templates)?;
 

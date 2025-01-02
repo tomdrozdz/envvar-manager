@@ -1,27 +1,15 @@
-use std::cell::RefCell;
-
 use anyhow::{anyhow, Result};
-use rusqlite::{params, Connection, Error::SqliteFailure};
+use rusqlite::Transaction;
+use rusqlite::{params, Error::SqliteFailure};
 
 use crate::entities::template::Template;
 use crate::repository;
 
-#[derive(Debug)]
-pub struct Repository<'a> {
-    connection: &'a RefCell<Connection>,
-}
+#[derive(Debug, Default)]
+pub struct Repository;
 
-impl<'a> Repository<'a> {
-    pub fn new(connection: &'a RefCell<Connection>) -> Self {
-        Self { connection }
-    }
-}
-
-impl<'a> repository::Repository<String, Template> for Repository<'a> {
-    fn add(&self, template: Template) -> Result<()> {
-        let mut binding = self.connection.borrow_mut();
-        let transaction = binding.transaction()?;
-
+impl repository::Repository<String, Template, Transaction<'_>> for Repository {
+    fn add(&self, transaction: &Transaction, template: Template) -> Result<()> {
         transaction
             .execute(
                 "INSERT INTO names (name) VALUES (?1)",
@@ -42,13 +30,11 @@ impl<'a> repository::Repository<String, Template> for Repository<'a> {
             params![template.name, template.pattern, template.updated_at],
         )?;
 
-        transaction.commit()?;
         Ok(())
     }
 
-    fn get(&self, name: &String) -> Result<Template> {
-        let connection = self.connection.borrow();
-        let mut stmt = connection
+    fn get(&self, transaction: &Transaction, name: &String) -> Result<Template> {
+        let mut stmt = transaction
             .prepare("SELECT name, pattern, updated_at FROM templates WHERE name = ?1")?;
 
         let mut rows = stmt.query(params![name])?;
@@ -63,9 +49,8 @@ impl<'a> repository::Repository<String, Template> for Repository<'a> {
         }
     }
 
-    fn list(&self) -> Result<Vec<Template>> {
-        let connection = self.connection.borrow();
-        let mut stmt = connection.prepare("SELECT name, pattern, updated_at FROM templates")?;
+    fn list(&self, transaction: &Transaction) -> Result<Vec<Template>> {
+        let mut stmt = transaction.prepare("SELECT name, pattern, updated_at FROM templates")?;
 
         let rows = stmt.query_map([], |row| {
             Ok(Template {
@@ -83,10 +68,7 @@ impl<'a> repository::Repository<String, Template> for Repository<'a> {
         Ok(templates)
     }
 
-    fn remove(&self, name: &String) -> Result<()> {
-        let mut binding = self.connection.borrow_mut();
-        let transaction = binding.transaction()?;
-
+    fn remove(&self, transaction: &Transaction, name: &String) -> Result<()> {
         let removed =
             transaction.execute("DELETE FROM templates WHERE name = ?1", params![name])?;
         if removed == 0 {
@@ -94,14 +76,11 @@ impl<'a> repository::Repository<String, Template> for Repository<'a> {
         }
 
         transaction.execute("DELETE FROM names WHERE name = ?1", params![name])?;
-        transaction.commit()?;
         Ok(())
     }
 
-    fn update(&self, template: Template) -> Result<()> {
-        let connection = self.connection.borrow();
-
-        let updated = connection.execute(
+    fn update(&self, transaction: &Transaction, template: Template) -> Result<()> {
+        let updated = transaction.execute(
             "UPDATE templates SET pattern = ?2, updated_at = ?3 WHERE name = ?1",
             params![template.name, template.pattern, template.updated_at],
         )?;

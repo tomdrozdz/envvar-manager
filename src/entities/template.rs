@@ -25,7 +25,7 @@ impl Template {
         })
     }
 
-    pub fn update(&mut self, pattern: String) -> Result<()> {
+    pub fn update_pattern(&mut self, pattern: String) -> Result<()> {
         validate_pattern(&pattern)?;
 
         self.pattern = pattern;

@@ -13,7 +13,7 @@ pub struct Command {}
 
 impl Command {
     pub fn run(&self, db: &Database) -> Result<()> {
-        let templates = db.templates.list()?;
+        let templates = db.transaction(|transaction| db.templates.list(transaction))?;
 
         let mut table = Table::new(templates);
         let (width, _) = get_terminal_size();

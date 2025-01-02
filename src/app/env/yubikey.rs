@@ -24,14 +24,14 @@ impl Command {
         let yubikey = method("Enter your Yubikey: ")?;
         let name = "YUBIKEY".to_string();
 
-        if let Ok(mut env_var) = db.env_vars.get(&name) {
-            env_var.update_value(yubikey);
-            db.env_vars.update(env_var)?;
-        } else {
-            let env_var = EnvVar::new(name, yubikey, true)?;
-            db.env_vars.add(env_var)?;
-        };
-
-        Ok(())
+        db.transaction(|transaction| {
+            if let Ok(mut env_var) = db.env_vars.get(transaction, &name) {
+                env_var.update_value(yubikey);
+                db.env_vars.update(transaction, env_var)
+            } else {
+                let env_var = EnvVar::new(name, yubikey, true)?;
+                db.env_vars.add(transaction, env_var)
+            }
+        })
     }
 }

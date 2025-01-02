@@ -13,7 +13,7 @@ pub struct Command {}
 
 impl Command {
     pub fn run(&self, db: &Database) -> Result<()> {
-        let env_vars = db.env_vars.list()?;
+        let env_vars = db.transaction(|transaction| db.env_vars.list(transaction))?;
 
         let mut table = Table::new(env_vars);
         let (width, _) = get_terminal_size();

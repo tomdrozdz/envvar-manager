@@ -18,8 +18,6 @@ pub struct Command {
 impl Command {
     pub fn run(&self, db: &Database) -> Result<()> {
         let env_var = EnvVar::new(self.name.clone(), self.value.clone(), self.secret)?;
-
-        db.env_vars.add(env_var)?;
-        Ok(())
+        db.transaction(|transaction| db.env_vars.add(transaction, env_var))
     }
 }

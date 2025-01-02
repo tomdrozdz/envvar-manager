@@ -2,7 +2,7 @@ use anyhow::Result;
 use clap::Subcommand;
 
 use crate::config::Config;
-use crate::sqlite::{init_connection, Database};
+use crate::sqlite;
 
 mod env;
 mod export;
@@ -25,8 +25,8 @@ pub enum Command {
 impl Command {
     pub fn run(&self, config: &Config) -> Result<()> {
         log::debug!("Running command {:?} with config {:?}", self, config);
-        let db_connection = init_connection(&config.database_path)?;
-        let db = Database::new(&db_connection);
+        let db_connection = sqlite::init_connection(&config.database_path)?;
+        let db = sqlite::Database::new(&db_connection);
 
         match self {
             Command::Env(env) => env.run(&db),

@@ -27,12 +27,11 @@ echo "AUTH_TOKEN=$AUTH_TOKEN"
 
 ## TODO
 
+* Tests.
 * Add a `em get` to get the full value of a single variable/template.
-* Current transaction and connection handling is awful, should be moved out of the
-  repositories, but I wanted to try to do something with lifetimes for now.
-    * Probable solution: the `Db` struct should hold a connection pool. The commands
-      should either request a transaction or a connection, which will be later passed
-      to the repositories. The command is responsible for committing the transaction.
+* Could I refactor the commands not to be hardcoded to SQLite? Could the database
+  backend be more easily swapped at compile time?
 * I think the validation code and the resolver code could be improved, but I don't know
   how yet.
     * Actually, how are validators handled usually?
+* "List" commands do not need a transaction, but on the other hand it doesn't matter.

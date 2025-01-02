@@ -24,17 +24,18 @@ pub struct Command {
 
 impl Command {
     pub fn run(&self, db: &Database) -> Result<()> {
-        let mut env_var = db.env_vars.get(&self.name)?;
+        db.transaction(|transaction| {
+            let mut env_var = db.env_vars.get(transaction, &self.name)?;
 
-        if let Some(value) = &self.value {
-            env_var.update_value(value.clone());
-        }
+            if let Some(value) = &self.value {
+                env_var.update_value(value.clone());
+            }
 
-        if let Some(secret) = self.secret {
-            env_var.update_secret(secret);
-        }
+            if let Some(secret) = self.secret {
+                env_var.update_secret(secret);
+            }
 
-        db.env_vars.update(env_var)?;
-        Ok(())
+            db.env_vars.update(transaction, env_var)
+        })
     }
 }

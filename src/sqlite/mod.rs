@@ -3,7 +3,7 @@ use std::{cell::RefCell, path::PathBuf};
 use anyhow::Result;
 use include_dir::{include_dir, Dir};
 use lazy_static::lazy_static;
-use rusqlite::Connection;
+use rusqlite::{Connection, Transaction};
 use rusqlite_migration::Migrations;
 
 mod env_var;
@@ -30,15 +30,30 @@ pub fn init_connection(path: &PathBuf) -> Result<RefCell<Connection>> {
 
 #[derive(Debug)]
 pub struct Database<'a> {
-    pub env_vars: env_var::Repository<'a>,
-    pub templates: template::Repository<'a>,
+    connection: &'a RefCell<Connection>,
+    pub env_vars: env_var::Repository,
+    pub templates: template::Repository,
 }
 
 impl<'a> Database<'a> {
     pub fn new(connection: &'a RefCell<Connection>) -> Self {
         Self {
-            env_vars: env_var::Repository::new(connection),
-            templates: template::Repository::new(connection),
+            connection,
+            env_vars: env_var::Repository,
+            templates: template::Repository,
         }
+    }
+
+    pub fn transaction<V>(&self, f: impl FnOnce(&Transaction) -> Result<V>) -> Result<V> {
+        let mut connection = self.connection.borrow_mut();
+        let transaction = connection.transaction()?;
+
+        let result = f(&transaction);
+        match result {
+            Ok(_) => transaction.commit(),
+            Err(_) => transaction.rollback(),
+        }?;
+
+        result
     }
 }
