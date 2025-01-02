@@ -15,33 +15,33 @@ lazy_static! {
         Migrations::from_directory(&MIGRATIONS_DIR).unwrap();
 }
 
-pub fn init_connection(path: &PathBuf) -> Result<RefCell<Connection>> {
-    if !path.exists() {
-        let directory = path.parent().unwrap();
-        std::fs::create_dir_all(directory)?;
-    }
-
-    let mut connection = Connection::open(path)?;
-    MIGRATIONS.to_latest(&mut connection)?;
-    connection.pragma_update(None, "foreign_keys", "ON")?;
-
-    Ok(RefCell::new(connection))
-}
-
 #[derive(Debug)]
-pub struct Database<'a> {
-    connection: &'a RefCell<Connection>,
+pub struct Database {
+    connection: RefCell<Connection>,
     pub env_vars: env_var::Repository,
     pub templates: template::Repository,
 }
 
-impl<'a> Database<'a> {
-    pub fn new(connection: &'a RefCell<Connection>) -> Self {
-        Self {
-            connection,
+impl Database {
+    fn from_connection(mut connection: Connection) -> Result<Self> {
+        MIGRATIONS.to_latest(&mut connection)?;
+        connection.pragma_update(None, "foreign_keys", "ON")?;
+
+        Ok(Self {
+            connection: RefCell::new(connection),
             env_vars: env_var::Repository,
             templates: template::Repository,
+        })
+    }
+
+    pub fn from_path(path: &PathBuf) -> Result<Self> {
+        if !path.exists() {
+            let directory = path.parent().unwrap();
+            std::fs::create_dir_all(directory)?;
         }
+
+        let connection = Connection::open(path)?;
+        Self::from_connection(connection)
     }
 
     pub fn transaction<V>(&self, f: impl FnOnce(&Transaction) -> Result<V>) -> Result<V> {
@@ -55,5 +55,13 @@ impl<'a> Database<'a> {
         }?;
 
         result
+    }
+}
+
+#[cfg(test)]
+impl Database {
+    pub fn in_memory() -> Result<Self> {
+        let connection = Connection::open_in_memory()?;
+        Self::from_connection(connection)
     }
 }

@@ -25,8 +25,7 @@ pub enum Command {
 impl Command {
     pub fn run(&self, config: &Config) -> Result<()> {
         log::debug!("Running command {:?} with config {:?}", self, config);
-        let db_connection = sqlite::init_connection(&config.database_path)?;
-        let db = sqlite::Database::new(&db_connection);
+        let db = sqlite::Database::from_path(&config.database_path)?;
 
         match self {
             Command::Env(env) => env.run(&db),
