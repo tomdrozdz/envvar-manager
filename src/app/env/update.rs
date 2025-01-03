@@ -1,8 +1,7 @@
 use anyhow::Result;
 use clap::{ArgGroup, Args};
 
-use crate::repository::Repository;
-use crate::sqlite::Database;
+use crate::database::{Database, Repository};
 
 #[derive(Args, Debug)]
 #[clap(group(
@@ -23,9 +22,10 @@ pub struct Command {
 }
 
 impl Command {
-    pub fn run(&self, db: &Database) -> Result<()> {
+    pub fn run<T, D: Database<T>>(&self, db: &D) -> Result<()> {
         db.transaction(|transaction| {
-            let mut env_var = db.env_vars.get(transaction, &self.name)?;
+            let repo = db.env_vars();
+            let mut env_var = repo.get(transaction, &self.name)?;
 
             if let Some(value) = &self.value {
                 env_var.update_value(value.clone());
@@ -35,7 +35,7 @@ impl Command {
                 env_var.update_secret(secret);
             }
 
-            db.env_vars.update(transaction, env_var)
+            repo.update(transaction, env_var)
         })
     }
 }

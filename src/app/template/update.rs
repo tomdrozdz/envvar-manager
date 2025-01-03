@@ -1,8 +1,7 @@
 use anyhow::Result;
 use clap::Args;
 
-use crate::repository::Repository;
-use crate::sqlite::Database;
+use crate::database::{Database, Repository};
 
 #[derive(Args, Debug)]
 pub struct Command {
@@ -11,11 +10,12 @@ pub struct Command {
 }
 
 impl Command {
-    pub fn run(&self, db: &Database) -> Result<()> {
+    pub fn run<T, D: Database<T>>(&self, db: &D) -> Result<()> {
         db.transaction(|transaction| {
-            let mut template = db.templates.get(transaction, &self.name)?;
+            let repo = db.templates();
+            let mut template = repo.get(transaction, &self.name)?;
             template.update_pattern(self.pattern.clone())?;
-            db.templates.update(transaction, template)
+            repo.update(transaction, template)
         })
     }
 }

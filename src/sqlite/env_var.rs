@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Result};
-use rusqlite::{params, Error::SqliteFailure, Row, Transaction};
+use rusqlite::{params, Connection, Error::SqliteFailure, Row};
 
-use crate::{entities::env_var::EnvVar, repository};
+use crate::{database, entities::env_var::EnvVar};
 
 #[derive(Debug, Default)]
 pub struct Repository;
@@ -26,9 +26,9 @@ macro_rules! to_row {
     };
 }
 
-impl repository::Repository<String, EnvVar, Transaction<'_>> for Repository {
-    fn add(&self, transaction: &Transaction, env_var: EnvVar) -> Result<()> {
-        transaction
+impl database::Repository<String, EnvVar, Connection> for Repository {
+    fn add(&self, connection: &Connection, env_var: EnvVar) -> Result<()> {
+        connection
             .execute(
                 "INSERT INTO names (name) VALUES (?1)",
                 params![env_var.name],
@@ -43,7 +43,7 @@ impl repository::Repository<String, EnvVar, Transaction<'_>> for Repository {
                 _ => err.into(),
             })?;
 
-        transaction.execute(
+        connection.execute(
             "INSERT INTO env_vars (name, value, secret, updated_at) VALUES (?1, ?2, ?3, ?4)",
             to_row!(env_var),
         )?;
@@ -51,8 +51,8 @@ impl repository::Repository<String, EnvVar, Transaction<'_>> for Repository {
         Ok(())
     }
 
-    fn get(&self, transaction: &Transaction, name: &String) -> Result<EnvVar> {
-        let mut stmt = transaction
+    fn get(&self, connection: &Connection, name: &String) -> Result<EnvVar> {
+        let mut stmt = connection
             .prepare("SELECT name, value, secret, updated_at FROM env_vars WHERE name = ?1")?;
 
         let mut rows = stmt.query(params![name])?;
@@ -63,9 +63,9 @@ impl repository::Repository<String, EnvVar, Transaction<'_>> for Repository {
         }
     }
 
-    fn list(&self, transaction: &Transaction) -> Result<Vec<EnvVar>> {
+    fn list(&self, connection: &Connection) -> Result<Vec<EnvVar>> {
         let mut stmt =
-            transaction.prepare("SELECT name, value, secret, updated_at FROM env_vars")?;
+            connection.prepare("SELECT name, value, secret, updated_at FROM env_vars")?;
 
         let rows = stmt.query_map([], from_row)?;
 
@@ -73,18 +73,18 @@ impl repository::Repository<String, EnvVar, Transaction<'_>> for Repository {
         Ok(env_vars)
     }
 
-    fn remove(&self, transaction: &Transaction, name: &String) -> Result<()> {
-        let removed = transaction.execute("DELETE FROM env_vars WHERE name = ?1", params![name])?;
+    fn remove(&self, connection: &Connection, name: &String) -> Result<()> {
+        let removed = connection.execute("DELETE FROM env_vars WHERE name = ?1", params![name])?;
         if removed == 0 {
             return Err(anyhow!("Environment variable {name} not found"));
         }
 
-        transaction.execute("DELETE FROM names WHERE name = ?1", params![name])?;
+        connection.execute("DELETE FROM names WHERE name = ?1", params![name])?;
         Ok(())
     }
 
-    fn update(&self, transaction: &Transaction, env_var: EnvVar) -> Result<()> {
-        let updated = transaction.execute(
+    fn update(&self, connection: &Connection, env_var: EnvVar) -> Result<()> {
+        let updated = connection.execute(
             "UPDATE env_vars SET value = ?2, secret = ?3, updated_at = ?4 WHERE name = ?1",
             to_row!(env_var),
         )?;

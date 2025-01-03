@@ -1,10 +1,9 @@
 use anyhow::Result;
 use clap::Args;
 
+use crate::database::{Database, Repository};
 use crate::entities::env_var::EnvVar;
 use crate::input::{gui, terminal};
-use crate::repository::Repository;
-use crate::sqlite::Database;
 
 #[derive(Args, Debug)]
 pub struct Command {
@@ -14,7 +13,7 @@ pub struct Command {
 }
 
 impl Command {
-    pub fn run(&self, db: &Database) -> Result<()> {
+    pub fn run<T, D: Database<T>>(&self, db: &D) -> Result<()> {
         let method = if self.terminal {
             terminal::get_input
         } else {
@@ -25,12 +24,14 @@ impl Command {
         let name = "YUBIKEY".to_string();
 
         db.transaction(|transaction| {
-            if let Ok(mut env_var) = db.env_vars.get(transaction, &name) {
+            let repo = db.env_vars();
+
+            if let Ok(mut env_var) = repo.get(transaction, &name) {
                 env_var.update_value(yubikey);
-                db.env_vars.update(transaction, env_var)
+                repo.update(transaction, env_var)
             } else {
                 let env_var = EnvVar::new(name, yubikey, true)?;
-                db.env_vars.add(transaction, env_var)
+                repo.add(transaction, env_var)
             }
         })
     }

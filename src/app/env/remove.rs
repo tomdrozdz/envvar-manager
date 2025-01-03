@@ -1,8 +1,7 @@
 use anyhow::Result;
 use clap::Args;
 
-use crate::repository::Repository;
-use crate::sqlite::Database;
+use crate::database::{Database, Repository};
 
 #[derive(Args, Debug)]
 pub struct Command {
@@ -10,7 +9,7 @@ pub struct Command {
 }
 
 impl Command {
-    pub fn run(&self, db: &Database) -> Result<()> {
-        db.transaction(|transaction| db.env_vars.remove(transaction, &self.name))
+    pub fn run<T, D: Database<T>>(&self, db: &D) -> Result<()> {
+        db.transaction(|transaction| db.env_vars().remove(transaction, &self.name))
     }
 }

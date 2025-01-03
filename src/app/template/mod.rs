@@ -1,7 +1,7 @@
 use anyhow::Result;
 use clap::Subcommand;
 
-use crate::sqlite::Database;
+use crate::database::Database;
 
 mod add;
 mod list;
@@ -24,7 +24,7 @@ pub enum Command {
 }
 
 impl Command {
-    pub fn run(&self, db: &Database) -> Result<()> {
+    pub fn run<T, D: Database<T>>(&self, db: &D) -> Result<()> {
         match self {
             Command::Add(add) => add.run(db),
             Command::List(list) => list.run(db),

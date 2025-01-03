@@ -29,8 +29,6 @@ echo "AUTH_TOKEN=$AUTH_TOKEN"
 
 * Tests.
 * Add a `em get` to get the full value of a single variable/template.
-* Could I refactor the commands not to be hardcoded to SQLite? Could the database
-  backend be more easily swapped at compile time?
 * I think the validation code and the resolver code could be improved, but I don't know
   how yet.
     * Actually, how are validators handled usually?

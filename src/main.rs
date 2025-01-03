@@ -6,10 +6,10 @@ use std::path::PathBuf;
 
 mod app;
 mod config;
+mod database;
 mod entities;
 mod input;
 mod output;
-mod repository;
 mod resolver;
 mod sqlite;
 

@@ -5,15 +5,15 @@ use tabled::{
     Table,
 };
 
-use crate::sqlite::Database;
-use crate::{output::get_terminal_size, repository::Repository};
+use crate::database::{Database, Repository};
+use crate::output::get_terminal_size;
 
 #[derive(Args, Debug)]
 pub struct Command {}
 
 impl Command {
-    pub fn run(&self, db: &Database) -> Result<()> {
-        let env_vars = db.transaction(|transaction| db.env_vars.list(transaction))?;
+    pub fn run<T, D: Database<T>>(&self, db: &D) -> Result<()> {
+        let env_vars = db.transaction(|transaction| db.env_vars().list(transaction))?;
 
         let mut table = Table::new(env_vars);
         let (width, _) = get_terminal_size();

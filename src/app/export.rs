@@ -3,17 +3,17 @@ use std::io::{BufWriter, Write};
 use anyhow::Result;
 use clap::Args;
 
-use crate::repository::Repository;
-use crate::{resolver::resolve, sqlite::Database};
+use crate::database::{Database, Repository};
+use crate::resolver::resolve;
 
 #[derive(Args, Debug)]
 pub struct Command {}
 
 impl Command {
-    pub fn run(&self, db: &Database) -> Result<()> {
+    pub fn run<T, D: Database<T>>(&self, db: &D) -> Result<()> {
         let (env_vars, templates) = db.transaction(|transaction| {
-            let env_vars = db.env_vars.list(transaction)?;
-            let templates = db.templates.list(transaction)?;
+            let env_vars = db.env_vars().list(transaction)?;
+            let templates = db.templates().list(transaction)?;
             Ok((env_vars, templates))
         })?;
 

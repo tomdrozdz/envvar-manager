@@ -1,9 +1,8 @@
 use anyhow::Result;
 use clap::Args;
 
+use crate::database::{Database, Repository};
 use crate::entities::env_var::EnvVar;
-use crate::repository::Repository;
-use crate::sqlite::Database;
 
 #[derive(Args, Debug)]
 pub struct Command {
@@ -16,8 +15,8 @@ pub struct Command {
 }
 
 impl Command {
-    pub fn run(&self, db: &Database) -> Result<()> {
+    pub fn run<T, D: Database<T>>(&self, db: &D) -> Result<()> {
         let env_var = EnvVar::new(self.name.clone(), self.value.clone(), self.secret)?;
-        db.transaction(|transaction| db.env_vars.add(transaction, env_var))
+        db.transaction(|transaction| db.env_vars().add(transaction, env_var))
     }
 }
